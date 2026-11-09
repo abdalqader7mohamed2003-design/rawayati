@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>روايتي</title>
+<style>
+:root{--bg:#0a0f1f;--bg2:#141c38;--fg:#f3ead2;--ac:#d4af37;--mut:#9aa3bd}
+:root[data-t=light]{--bg:#f7f3e8;--bg2:#ebe4d0;--fg:#111;--ac:#111;--mut:#6b6757}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:"Noto Naskh Arabic","Amiri",serif;font-size:17px;padding-top:env(safe-area-inset-top)}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--ac)}
+header h1{font-size:24px;color:var(--ac)}
+button{font:inherit;background:none;border:1px solid var(--ac);color:var(--ac);border-radius:10px;padding:6px 14px}
+#q{width:calc(100% - 28px);margin:14px;padding:12px;border-radius:12px;border:1px solid var(--ac);background:var(--bg2);color:var(--fg);font:inherit}
+#list{padding:0 14px 30px}
+h2{color:var(--ac);font-size:18px;margin:6px 0 10px}
+.card{background:var(--bg2);border:1px solid var(--ac);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.card small{display:block;color:var(--mut);margin-top:4px}
+#dr{position:fixed;inset:0;display:none;z-index:5}
+#dr.on{display:block;background:#0008}
+#nv{position:absolute;top:0;bottom:0;right:0;width:80%;max-width:320px;background:var(--bg);border-left:1px solid var(--ac);overflow:auto;padding:calc(14px + env(safe-area-inset-top)) 14px}
+summary{padding:10px 0;color:var(--ac);font-weight:bold}
+details details{margin-right:12px}
+#nv a{display:block;padding:7px 12px}
+#rd{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:9;padding-top:env(safe-area-inset-top)}
+#rd.on{display:flex}
+#rh,#rf{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;gap:8px}
+#rt{flex:1;text-align:center;color:var(--ac);font-size:18px}
+#pv{flex:1;min-height:0;display:flex;margin:4px 14px;background:#f3e7c4;color:#1b1409;border-radius:6px;box-shadow:0 0 0 1px var(--ac),0 6px 20px #0006;padding:22px}
+#pv.f{animation:fl .3s}
+@keyframes fl{50%{transform:perspective(900px) rotateY(calc(var(--d)*1deg));opacity:.55}}
+#vp{flex:1;overflow:hidden;min-height:0}
+#bk{column-gap:0;column-fill:auto;line-height:2.1;font-size:19px}
+#bk p{margin-bottom:.9em;text-align:justify}
+</style></head><body>
+<header><button id="mb">☰</button><h1>روايتي</h1>
+<svg width="38" height="38" viewBox="0 0 40 40"><rect width="40" height="40" rx="9" fill="#d4af37"/><path d="M20 31 8 24V11l12 6 12-6v13z" fill="#000"/><path d="M20 17v14M20 4v8M16 8l4-4 4 4" stroke="#000" stroke-width="2" fill="none"/></svg></header>
+<input id="q" type="search" placeholder="ابحث عن قصة أو شخصية...">
+<div id="list"></div>
+<div id="dr"><div id="nv"></div></div>
+<div id="rd"><div id="rh"><button id="bc">رجوع</button><div id="rt"></div><button id="st">☆</button></div>
+<div id="pv"><div id="vp"><div id="bk"></div></div></div>
+<div id="rf"><button id="pp">السابق</button><span id="pn"></span><button id="nx">التالي</button></div></div>
+<script>
+const MAIN=["الأنبياء","الدول والممالك","القبائل","الخلفاء","الملوك","القادة","شخصيات من التاريخ","حضارة","مدن","معارك وحروب"];
+let S=[],R=[],cur=null,pg=0,np=1;
+const $=s=>document.querySelector(s);
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=n=>n.toLocaleString('ar-EG');
+const card=s=>`<div class="card" data-id="${esc(s.id)}"><b>${esc(s.title)}</b><small>${esc((s.main||[]).join(' • '))}</small></div>`;
+function show(t,a){$('#list').innerHTML=`<h2>${esc(t)}</h2>`+(a.length?a.map(card).join(''):'<p style="color:var(--mut)">لا توجد قصص هنا بعد.</p>')}
+function home(){R=[...S].sort(()=>Math.random()-.5).slice(0,6);$('#q').value='';show('قصص لك',R)}
+$('#q').oninput=e=>{const q=e.target.value.trim();if(!q)return show('قصص لك',R);show('نتائج البحث',S.filter(s=>[s.title,s.body,...(s.main||[]),...(s.sub||[])].join(' ').includes(q)))};
+function menu(){
+const lk=a=>a.length?a.map(s=>`<a data-id="${esc(s.id)}">${esc(s.title)}</a>`).join(''):'<a style="color:var(--mut)">فارغ</a>';
+const sd=ls('saved',[]).map(id=>S.find(s=>s.id==id)).filter(Boolean),ct=ls('cont',[]).map(c=>S.find(s=>s.id==c.id)).filter(Boolean);
+$('#nv').innerHTML=`<details open><summary>المكتبة</summary><details><summary>المحفوظات</summary>${lk(sd)}</details><details><summary>متابعة القراءة</summary>${lk(ct)}</details></details><details open><summary>الأقسام</summary>${MAIN.map(m=>{const subs=[...new Set(S.filter(s=>(s.main||[]).includes(m)).flatMap(s=>s.sub||[]))];return `<details><summary>${m}</summary><a data-m="${m}">كل القصص</a>${subs.map(x=>`<a data-m="${m}" data-s="${esc(x)}">${esc(x)}</a>`).join('')}</details>`}).join('')}</details><button id="th" style="margin-top:16px">تبديل الألوان</button>`}
+function th(){const t=document.documentElement.dataset.t=='light'?'dark':'light';document.documentElement.dataset.t=t;sv('t',t)}
+document.documentElement.dataset.t=ls('t','dark');
+function keep(){if(!cur)return;const c=ls('cont',[]).filter(x=>x.id!=cur.id);c.unshift({id:cur.id,p:pg});sv('cont',c.slice(0,20))}
+function go(i,anim,d){i=Math.max(0,Math.min(np-1,i));if(anim&&i==pg)return;const w=$('#vp').clientWidth;
+const set=()=>{$('#bk').style.transform=`translateX(${i*w}px)`;pg=i;$('#pn').textContent=num(i+1)+' / '+num(np);keep()};
+if(anim){const p=$('#pv');p.style.setProperty('--d',d>0?-14:14);p.classList.remove('f');void p.offsetWidth;p.classList.add('f');setTimeout(set,130)}else set()}
+function read(id,p){cur=S.find(s=>s.id==id);if(!cur)return;
+$('#rt').textContent=cur.title;
+$('#bk').innerHTML=String(cur.body||'').split(/\n\s*\n/).map(t=>`<p>${esc(t.trim())}</p>`).join('');
+$('#st').textContent=ls('saved',[]).includes(id)?'★':'☆';
+$('#rd').classList.add('on');
+const vp=$('#vp'),bk=$('#bk');bk.style.transform='';bk.style.height=vp.clientHeight+'px';bk.style.columnWidth=vp.clientWidth+'px';
+setTimeout(()=>{np=Math.max(1,Math.round(bk.scrollWidth/vp.clientWidth));pg=0;go(p||0,false)},60)}
+$('#bc').onclick=()=>{keep();$('#rd').classList.remove('on');cur=null};
+$('#st').onclick=()=>{let a=ls('saved',[]);a=a.includes(cur.id)?a.filter(x=>x!=cur.id):[cur.id,...a];sv('saved',a);$('#st').textContent=a.includes(cur.id)?'★':'☆'};
+$('#nx').onclick=()=>go(pg+1,1,1);$('#pp').onclick=()=>go(pg-1,1,-1);
+let x0=0;$('#pv').ontouchstart=e=>x0=e.touches[0].clientX;
+$('#pv').ontouchend=e=>{const dx=e.changedTouches[0].clientX-x0;if(dx>45)go(pg+1,1,1);else if(dx<-45)go(pg-1,1,-1)};
+$('#mb').onclick=()=>{menu();$('#dr').classList.add('on')};
+document.addEventListener('click',e=>{const t=e.target;
+if(t.id=='dr')return $('#dr').classList.remove('on');
+if(t.closest('#th'))return th();
+const a=t.closest('[data-id]');
+if(a){$('#dr').classList.remove('on');return read(a.dataset.id,(ls('cont',[]).find(c=>c.id==a.dataset.id)||{}).p)}
+const m=t.closest('[data-m]');
+if(m){$('#dr').classList.remove('on');const s=m.dataset.s;show(s||m.dataset.m,S.filter(x=>(x.main||[]).includes(m.dataset.m)&&(!s||(x.sub||[]).includes(s))));scrollTo(0,0)}});
+async function load(){
+try{const ix=await (await fetch('data/index.json')).json();
+for(const f of ix.files){try{const j=await (await fetch('data/'+f)).json();(j.stories||[]).forEach(s=>{if(s.id&&!S.some(x=>x.id==s.id))S.push(s)})}catch(e){}}}catch(e){}
+home()}
+load();
+</script></body></html>
