@@ -18,8 +18,20 @@ jobs:
       - run: npm install
       - run: npx cap add android
       - run: npx cap sync android
-      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: Set version number
+        run: sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+      - name: Build release APK
+        run: cd android && chmod +x gradlew && ./gradlew assembleRelease
+      - name: Sign APK
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > release.jks
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          $BT/zipalign -f -p 4 android/app/build/outputs/apk/release/app-release-unsigned.apk aligned.apk
+          $BT/apksigner sign --ks release.jks --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEYSTORE_PASSWORD --ks-key-alias rawayati --out rawayati.apk aligned.apk
       - uses: actions/upload-artifact@v4
         with:
           name: rawayati-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: rawayati.apk
